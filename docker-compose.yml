@@ -1,0 +1,16 @@
+services:
+  web:
+    build: .
+    container_name: homecraft-flask
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_APP: app.py
+      FLASK_ENV: development
+    volumes:
+      - .:/app
+      - instance_data:/app/instance
+    restart: unless-stopped
+
+volumes:
+  instance_data:
