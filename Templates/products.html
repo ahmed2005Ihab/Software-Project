@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeCraft - Products</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> 
+</head>
+<body>
+    <header class="header">
+        <div class="logo"><a href="{{ url_for('products.home') }}">🏠 HomeCraft</a></div>
+        <nav class="nav">
+            <a href="{{ url_for('products.home') }}">Home</a>
+            <a href="{{ url_for('products.products') }}" class="active">Products</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('cart.order_history') }}">My Orders</a>
+                <a href="{{ url_for('cart.view_wishlist') }}">Wishlist</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Login</a>
+            {% endif %}
+            <a href="{{ url_for('feedback.contact') }}">Contact Us</a>
+        </nav>
+        <div class="search-icons">
+            <form method="GET" action="{{ url_for('products.products') }}">
+                <input type="text" name="search" placeholder="Search furniture..." 
+                       value="{{ current_filters.search if current_filters.search else '' }}">
+                {% if current_filters.categories %}
+                    {% for cat in current_filters.categories %}
+                        <input type="hidden" name="categories" value="{{ cat }}">
+                    {% endfor %}
+                {% endif %}
+                {% if current_filters.min_price %}
+                    <input type="hidden" name="min_price" value="{{ current_filters.min_price }}">
+                {% endif %}
+                {% if current_filters.max_price %}
+                    <input type="hidden" name="max_price" value="{{ current_filters.max_price }}">
+                {% endif %}
+                {% if current_filters.min_rating %}
+                    <input type="hidden" name="min_rating" value="{{ current_filters.min_rating }}">
+                {% endif %}
+                <button type="submit">🔍</button>
+            </form>
+            <a href="{{ url_for('cart.view_cart') }}"><span class="icon">🛒</span></a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('auth.profile') }}" style="display: inline-flex; align-items: center; gap: 0.5rem;"><span class="icon">👤</span><span style="font-size: 0.9rem; font-weight: 500;">{{ current_user.name.split()[0] if current_user.name else 'User' }}</span></a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}"><span class="icon">👤</span></a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main class="product-page">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="filters">
+            <h2>Filters</h2>
+            <form method="GET" action="{{ url_for('products.products') }}" id="filter-form">
+                <div class="filter-group">
+                    <h3>Price Range</h3>
+                    <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem;">
+                        <input type="number" name="min_price" id="min_price" placeholder="Min" min="0" step="0.01" 
+                               value="{{ current_filters.min_price if current_filters.min_price else '' }}" 
+                               class="form-input" style="width: 90px; padding: 0.5rem;">
+                        <span style="color: var(--text-light);">-</span>
+                        <input type="number" name="max_price" id="max_price" placeholder="Max" min="0" step="0.01" 
+                               value="{{ current_filters.max_price if current_filters.max_price else '' }}" 
+                               class="form-input" style="width: 90px; padding: 0.5rem;">
+                    </div>   
+                </div>
+
+                <div class="filter-group">
+                    <h3>Categories</h3>
+                    {% if categories %}
+                        {% for cat in categories %}
+                        <label>
+                            <input type="checkbox" name="categories" value="{{ cat.name }}" 
+                                   {% if current_filters.categories and cat.name in current_filters.categories %}checked{% endif %}>
+                            {{ cat.name }}
+                        </label>
+                        {% endfor %}
+                    {% else %}
+                        <label><input type="checkbox" name="categories" value="Sofas & Chairs" 
+                                     {% if current_filters.categories and 'Sofas & Chairs' in current_filters.categories %}checked{% endif %}> Sofas & Chairs</label>
+                        <label><input type="checkbox" name="categories" value="Tables" 
+                                     {% if current_filters.categories and 'Tables' in current_filters.categories %}checked{% endif %}> Tables</label>
+                        <label><input type="checkbox" name="categories" value="Beds" 
+                                     {% if current_filters.categories and 'Beds' in current_filters.categories %}checked{% endif %}> Beds</label>
+                        <label><input type="checkbox" name="categories" value="Storage" 
+                                     {% if current_filters.categories and 'Storage' in current_filters.categories %}checked{% endif %}> Storage</label>
+                        <label><input type="checkbox" name="categories" value="Lighting" 
+                                     {% if current_filters.categories and 'Lighting' in current_filters.categories %}checked{% endif %}> Lighting</label>
+                    {% endif %}
+                </div>
+                
+                <div class="filter-group">
+                    <h3>Minimum Rating</h3>
+                    <select name="min_rating" class="form-input" style="width: 100%; padding: 0.5rem;">
+                        <option value="" {% if not current_filters.min_rating %}selected{% endif %}>
+                            All ratings
+                        </option>
+                        <option value="1" {% if current_filters.min_rating == 1.0 %}selected{% endif %}>
+                            ★ and up (1.0+)
+                        </option>
+                        <option value="2" {% if current_filters.min_rating == 2.0 %}selected{% endif %}>
+                            ★★ and up (2.0+)
+                        </option>
+                        <option value="3" {% if current_filters.min_rating == 3.0 %}selected{% endif %}>
+                            ★★★ and up (3.0+)
+                        </option>
+                        <option value="4" {% if current_filters.min_rating == 4.0 %}selected{% endif %}>
+                            ★★★★ and up (4.0+)
+                        </option>
+                        <option value="5" {% if current_filters.min_rating == 5.0 %}selected{% endif %}>
+                            ★★★★★ (5.0)
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="filter-group" style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Apply Filters</button>
+                    <a href="{{ url_for('products.products') }}" class="btn btn-secondary" style="display: block; text-align: center; margin-top: 0.75rem; width: 100%;">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="product-grid">
+            {% for product in products %}
+            <div class="card product-item" style="position: relative;">
+                {% set img_file = product.image_url if product.image_url else 'Home.jpg' %}
+                <img src="{{ url_for('static', filename='images/' + img_file) }}" alt="{{ product.name }}" {% if product.stock_quantity == 0 %}style="opacity: 0.6;"{% endif %}>
+                {% if product.stock_quantity == 0 %}
+                    <div style="position: absolute; top: 0.75rem; left: 0.75rem; background-color: var(--error); color: white; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        OUT OF STOCK
+                    </div>
+                {% endif %}
+                {% if current_user.is_authenticated %}
+                    <div style="position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10;">
+                        {% if product.id in wishlist_product_ids %}
+                            <button type="button" 
+                                    class="wishlist-btn" 
+                                    data-product-id="{{ product.id }}" 
+                                    data-item-id="{{ wishlist_item_map[product.id] }}" 
+                                    data-product-name="{{ product.name }}"
+                                    data-in-wishlist="true"
+                                    style="background: rgba(255, 255, 255, 0.95); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 1.2rem; box-shadow: var(--shadow-md); color: var(--error); z-index: 11; transition: var(--transition); display: flex; align-items: center; justify-content: center;" 
+                                    title="Remove from wishlist"
+                                    onmouseover="this.style.transform='scale(1.1)'"
+                                    onmouseout="this.style.transform='scale(1)'">❤️</button>
+                        {% else %}
+                            <button type="button" 
+                                    class="wishlist-btn" 
+                                    data-product-id="{{ product.id }}" 
+                                    data-product-name="{{ product.name }}"
+                                    data-in-wishlist="false"
+                                    style="background: rgba(255, 255, 255, 0.95); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 1.2rem; box-shadow: var(--shadow-md); z-index: 11; transition: var(--transition); display: flex; align-items: center; justify-content: center;" 
+                                    title="Add to wishlist"
+                                    onmouseover="this.style.transform='scale(1.1)'"
+                                    onmouseout="this.style.transform='scale(1)'">🤍</button>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                <div class="product-info">
+                    <h4><a href="{{ url_for('products.product_detail', product_id=product.id) }}">{{ product.name }}</a></h4>
+                    <p>{{ product.category.name if product.category else 'Uncategorized' }}</p>
+                    {% set average_rating = product.get_average_rating() %}
+                    {% set full_stars = average_rating|int %}
+                    {% set has_half = (average_rating - full_stars) >= 0.5 %}
+                    <p style="color: #fbbf24; margin-bottom: 0.5rem;">
+                        {% if average_rating > 0 %}
+                            {% for i in range(full_stars) %}★{% endfor %}
+                            {% if has_half %}½{% endif %}
+                            {% for i in range(5 - full_stars - (1 if has_half else 0)) %}☆{% endfor %}
+                            <span style="color: #6b7280; font-size: 0.85rem; margin-left: 0.25rem;">
+                                {{ "%.1f"|format(average_rating) }}/5.0
+                            </span>
+                        {% else %}
+                            <span style="color: #9ca3af; font-size: 0.9rem;">No ratings yet</span>
+                        {% endif %}
+                    </p>
+                    <div class="product-price">${{ "%.2f"|format(product.price) }}</div>
+                    {% if product.stock_quantity == 0 %}
+                        <button type="button" class="btn btn-primary" disabled>Out of Stock</button>
+                    {% else %}
+                        {% set cart_qty = cart_quantity_map.get(product.id, 0) %}
+                        <button type="button" 
+                                class="btn btn-primary add-to-cart-btn" 
+                                data-product-id="{{ product.id }}" 
+                                data-product-name="{{ product.name }}"
+                                data-cart-quantity="{{ cart_qty }}">
+                            {% if cart_qty > 0 %}
+                                Add to Cart ({{ cart_qty }} in cart)
+                            {% else %}
+                                Add to Cart
+                            {% endif %}
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <p>No products available.</p>
+            {% endfor %}
+            </div>
+    </main>
+
+    <!-- Toast notification container -->
+    <div id="toast-container" style="display: none;">
+        <div id="toast-message">
+        </div>
+    </div>
+
+    <script>
+        // Auto-submit form when checkboxes or radio buttons change
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterForm = document.getElementById('filter-form');
+            if (filterForm) {
+                const checkboxes = filterForm.querySelectorAll('input[type="checkbox"], input[type="radio"]');
+                checkboxes.forEach(function(checkbox) {
+                    checkbox.addEventListener('change', function() {
+                        // Small delay to allow multiple selections
+                        setTimeout(function() {
+                            filterForm.submit();
+                        }, 300);
+                    });
+                });
+            }
+
+            // Handle add to cart button clicks
+            const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+            addToCartButtons.forEach(function(button) {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const productId = this.getAttribute('data-product-id');
+                    const productName = this.getAttribute('data-product-name');
+                    
+                    // Disable button during request
+                    this.disabled = true;
+                    const originalText = this.textContent;
+                    this.textContent = 'Adding...';
+                    
+                    addToCart(productId, productName, this, originalText);
+                });
+            });
+
+            // Handle wishlist button clicks
+            const wishlistButtons = document.querySelectorAll('.wishlist-btn');
+            wishlistButtons.forEach(function(button) {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const productId = this.getAttribute('data-product-id');
+                    const productName = this.getAttribute('data-product-name');
+                    const inWishlist = this.getAttribute('data-in-wishlist') === 'true';
+                    const itemId = this.getAttribute('data-item-id');
+                    
+                    if (inWishlist) {
+                        // Remove from wishlist
+                        removeFromWishlist(itemId, productId, productName, this);
+                    } else {
+                        // Add to wishlist
+                        addToWishlist(productId, productName, this);
+                    }
+                });
+            });
+        });
+
+        function showToast(message, isSuccess = true) {
+            const toastContainer = document.getElementById('toast-container');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            toastMessage.style.backgroundColor = isSuccess ? '#2e7d32' : '#c62828';
+            toastContainer.style.display = 'block';
+            
+            // Hide after 3 seconds
+            setTimeout(function() {
+                toastContainer.style.display = 'none';
+            }, 3000);
+        }
+
+        function addToCart(productId, productName, button, originalText) {
+            const formData = new FormData();
+            formData.append('quantity', '1');
+            
+            const url = '/cart/add/' + productId;
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                // Check if response status indicates authentication required
+                if (response.status === 401) {
+                    return response.json().then(data => {
+                        // Redirect to login page with shopping parameter
+                        if (data.requires_login && data.login_url) {
+                            window.location.href = data.login_url + '?shopping=true';
+                        } else {
+                            window.location.href = '/auth/login?shopping=true';
+                        }
+                        // Return early to prevent further processing
+                        return { redirected: true };
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // If redirected, don't process further
+                if (data && data.redirected) {
+                    return;
+                }
+                
+                // If we got here and requires_login is true, redirect
+                if (data && data.requires_login) {
+                    if (data.login_url) {
+                        window.location.href = data.login_url + '?shopping=true';
+                    } else {
+                        window.location.href = '/auth/login?shopping=true';
+                    }
+                    return;
+                }
+                
+                // Re-enable button
+                button.disabled = false;
+                
+                if (data && data.success) {
+                    // Update cart quantity in button
+                    const cartQuantity = data.cart_quantity || 0;
+                    button.setAttribute('data-cart-quantity', cartQuantity);
+                    
+                    if (cartQuantity > 0) {
+                        button.textContent = 'Add to Cart (' + cartQuantity + ' in cart)';
+                    } else {
+                        button.textContent = 'Add to Cart';
+                    }
+                    
+                    // Show success message
+                    showToast(data.message, true);
+                } else if (data && !data.success) {
+                    button.textContent = originalText;
+                    showToast(data.message, false);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                button.disabled = false;
+                button.textContent = originalText;
+                // If it's a network error or 401, redirect to login without showing error
+                if (error.message && (error.message.includes('401') || error.message.includes('Unauthorized'))) {
+                    window.location.href = '/auth/login?shopping=true';
+                }
+                // Don't show error message for login redirects - silently redirect
+            });
+        }
+
+        function addToWishlist(productId, productName, button) {
+            const url = '/cart/wishlist/add/' + productId;
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update button to show it's in wishlist
+                    button.setAttribute('data-in-wishlist', 'true');
+                    button.setAttribute('data-item-id', data.item_id);
+                    button.innerHTML = '❤️';
+                    button.style.color = '#c62828';
+                    button.title = 'Remove from wishlist';
+                    
+                    // Show success message
+                    showToast(data.message, true);
+                } else {
+                    showToast(data.message, false);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred. Please try again.', false);
+            });
+        }
+
+        function removeFromWishlist(itemId, productId, productName, button) {
+            const url = '/cart/wishlist/remove/' + itemId;
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update button to show it's not in wishlist
+                    button.setAttribute('data-in-wishlist', 'false');
+                    button.removeAttribute('data-item-id');
+                    button.innerHTML = '🤍';
+                    button.style.color = '';
+                    button.title = 'Add to wishlist';
+                    
+                    // Show success message
+                    showToast(data.message, true);
+                } else {
+                    showToast(data.message, false);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred. Please try again.', false);
+            });
+        }
+    </script>
+
+</body>
+</html>
+</html>
+</html>
