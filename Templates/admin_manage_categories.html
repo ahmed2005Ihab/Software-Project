@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Categories - Admin</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> 
+</head>
+<body>
+    <div id="page-overlay"></div>
+
+    <header class="header">
+        <div class="logo">🏠 Admin Panel</div>
+        <nav class="nav">
+            <a href="{{ url_for('products.home') }}">View Site</a>
+        </nav>
+        <div class="search-icons">
+            <a href="{{ url_for('auth.profile') }}" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 0.5rem;"><span class="icon">👤</span><span style="font-size: 0.9rem; font-weight: 500;">Admin User</span></a>
+        </div>
+    </header>
+
+    <main class="admin-layout">
+        <div class="admin-sidebar">
+            <ul class="sidebar-nav">
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.manage_products') }}">Manage Products</a></li>
+                <li><a href="{{ url_for('admin.manage_categories') }}" class="active">Manage Categories</a></li>
+                <li><a href="{{ url_for('admin.view_orders') }}">View Orders</a></li>
+                <li><a href="{{ url_for('admin.manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('admin.sales_reports') }}">Sales Reports</a></li>
+                <li><a href="{{ url_for('feedback.view_feedback') }}">Feedbacks</a></li>
+            </ul>
+        </div>
+
+        <div class="admin-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" style="padding: 15px; margin-bottom: 20px; background: {% if category == 'error' %}#ffebee{% elif category == 'success' %}#e8f5e9{% else %}#e3f2fd{% endif %}; color: {% if category == 'error' %}#c62828{% elif category == 'success' %}#2e7d32{% else %}#1565c0{% endif %}; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: 500;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h1>Categories Management</h1>
+                <a href="{{ url_for('admin.add_category') }}" class="btn btn-primary" style="text-decoration: none; padding: 10px 20px;">+ Add New Category</a>
+            </div>
+            
+            <!-- Search -->
+            <form method="GET" action="{{ url_for('admin.manage_categories') }}" style="margin-bottom: 20px;">
+                <input type="text" name="search" placeholder="Search categories by name..." 
+                       value="{{ search_query }}" 
+                       style="padding: 10px; width: 400px; border: 1px solid var(--border-light); border-radius: 4px;">
+                <button type="submit" class="btn btn-primary" style="padding: 10px 20px; margin-left: 10px;">Search</button>
+                {% if search_query %}
+                    <a href="{{ url_for('admin.manage_categories') }}" class="btn btn-secondary" style="padding: 10px 20px; margin-left: 10px; text-decoration: none; display: inline-block;">Clear</a>
+                {% endif %}
+            </form>
+            
+            <!-- Categories Table -->
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Category Name</th>
+                        <th>Description</th>
+                        <th>Products Count</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if category_data %}
+                    {% for item in category_data %}
+                    <tr>
+                        <td><strong>{{ item.category.name }}</strong></td>
+                        <td>{{ item.category.description if item.category.description else '<span style="color: var(--text-light); font-style: italic;">No description</span>'|safe }}</td>
+                        <td>{{ item.product_count }}</td>
+                        <td>{{ item.category.created_at.strftime('%B %d, %Y') if item.category.created_at else 'N/A' }}</td>
+                        <td class="action-links">
+                            {% if item.product_count == 0 %}
+                                <form method="POST" action="{{ url_for('admin.delete_category', category_id=item.category.id) }}" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirm('Are you sure you want to delete category \"{{ item.category.name }}\"? This action cannot be undone.');">
+                                    <button type="submit" style="background: none; border: none; color: #c62828; cursor: pointer; text-decoration: underline; padding: 0;">Delete</button>
+                                </form>
+                            {% else %}
+                                <span style="color: var(--text-light); font-size: 0.9rem;">Cannot delete (has {{ item.product_count }} product{{ 's' if item.product_count != 1 else '' }})</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">No categories found.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 15px; background-color: var(--bg-light); border-top: 1px solid var(--border-light); font-size: 0.8rem; color: var(--text-light);">
+        HomeCraft Admin | Version 1.0
+    </footer>
+</body>
+</html>
+

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Reports - Admin</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> 
+</head>
+<body>
+    <div id="page-overlay"></div>
+
+    <header class="header">
+        <div class="logo">🏠 Admin Panel</div>
+        <nav class="nav">
+            <a href="{{ url_for('products.home') }}">View Site</a>
+        </nav>
+        <div class="search-icons">
+            <a href="{{ url_for('auth.profile') }}" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 0.5rem;"><span class="icon">👤</span><span style="font-size: 0.9rem; font-weight: 500;">Admin User</span></a>
+        </div>
+    </header>
+
+    <main class="admin-layout">
+        <div class="admin-sidebar">
+            <ul class="sidebar-nav">
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.manage_products') }}">Manage Products</a></li>
+                <li><a href="{{ url_for('admin.manage_categories') }}">Manage Categories</a></li>
+                <li><a href="{{ url_for('admin.view_orders') }}">View Orders</a></li>
+                <li><a href="{{ url_for('admin.manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('admin.sales_reports') }}" class="active">Sales Reports</a></li>
+                <li><a href="{{ url_for('feedback.view_feedback') }}">Feedbacks</a></li>
+            </ul>
+        </div>
+
+        <div class="admin-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" style="padding: 15px; margin-bottom: 20px; background: {% if category == 'error' %}#ffebee{% elif category == 'success' %}#e8f5e9{% else %}#e3f2fd{% endif %}; color: {% if category == 'error' %}#c62828{% elif category == 'success' %}#2e7d32{% else %}#1565c0{% endif %}; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: 500;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <h1>Sales Reports</h1>
+            
+            <!-- Time Period Filter -->
+            <div style="margin-bottom: 30px;">
+                <label style="font-weight: 600; margin-right: 10px;">Time Period:</label>
+                <a href="{{ url_for('admin.sales_reports', period='all') }}" 
+                   style="padding: 8px 15px; text-decoration: none; background: {% if period == 'all' %}var(--purple){% else %}var(--bg-light){% endif %}; color: {% if period == 'all' %}purple{% else %}var(--text-dark){% endif %}; border: 1px solid var(--border-light); border-radius: 4px; margin-right: 5px;">
+                    All Time
+                </a>
+                <a href="{{ url_for('admin.sales_reports', period='today') }}" 
+                   style="padding: 8px 15px; text-decoration: none; background: {% if period == 'today' %}var(--purple){% else %}var(--bg-light){% endif %}; color: {% if period == 'today' %}purple{% else %}var(--text-dark){% endif %}; border: 1px solid var(--border-light); border-radius: 4px; margin-right: 5px;">
+                    Today
+                </a>
+                <a href="{{ url_for('admin.sales_reports', period='week') }}" 
+                   style="padding: 8px 15px; text-decoration: none; background: {% if period == 'week' %}var(--purple){% else %}var(--bg-light){% endif %}; color: {% if period == 'week' %}purple{% else %}var(--text-dark){% endif %}; border: 1px solid var(--border-light); border-radius: 4px; margin-right: 5px;">
+                    Last 7 Days
+                </a>
+                <a href="{{ url_for('admin.sales_reports', period='month') }}" 
+                   style="padding: 8px 15px; text-decoration: none; background: {% if period == 'month' %}var(--purple){% else %}var(--bg-light){% endif %}; color: {% if period == 'month' %}purple{% else %}var(--text-dark){% endif %}; border: 1px solid var(--border-light); border-radius: 4px; margin-right: 5px;">
+                    Last 30 Days
+                </a>
+                <a href="{{ url_for('admin.sales_reports', period='year') }}" 
+                   style="padding: 8px 15px; text-decoration: none; background: {% if period == 'year' %}var(--purple){% else %}var(--bg-light){% endif %}; color: {% if period == 'year' %}purple{% else %}var(--text-dark){% endif %}; border: 1px solid var(--border-light); border-radius: 4px;">
+                    Last Year
+                </a>
+            </div>
+            
+            <!-- Statistics Cards -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px;">
+                <div class="card" style="text-align: center; border-left: 5px solid var(--purple); padding: 25px;">
+                    <p style="color: var(--text-light); margin-bottom: 10px; font-size: 0.9rem;">Total Revenue</p>
+                    <h2 style="font-size: 2rem; margin: 0; color: var(--text-dark);">${{ "%.2f"|format(total_revenue) }}</h2>
+                </div>
+                <div class="card" style="text-align: center; border-left: 5px solid #4caf50; padding: 25px;">
+                    <p style="color: var(--text-light); margin-bottom: 10px; font-size: 0.9rem;">Total Orders</p>
+                    <h2 style="font-size: 2rem; margin: 0; color: var(--text-dark);">{{ total_orders }}</h2>
+                </div>
+                <div class="card" style="text-align: center; border-left: 5px solid #2196f3; padding: 25px;">
+                    <p style="color: var(--text-light); margin-bottom: 10px; font-size: 0.9rem;">Completed Orders</p>
+                    <h2 style="font-size: 2rem; margin: 0; color: var(--text-dark);">{{ completed_orders }}</h2>
+                </div>
+                <div class="card" style="text-align: center; border-left: 5px solid #ff9800; padding: 25px;">
+                    <p style="color: var(--text-light); margin-bottom: 10px; font-size: 0.9rem;">Avg Order Value</p>
+                    <h2 style="font-size: 2rem; margin: 0; color: var(--text-dark);">${{ "%.2f"|format(avg_order_value) }}</h2>
+                </div>
+            </div>
+            
+            <!-- Order Status Breakdown -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px;">
+                <div class="card" style="text-align: center; padding: 20px;">
+                    <p style="color: var(--text-light); margin-bottom: 10px; font-size: 0.9rem;">Pending Orders</p>
+                    <h2 style="font-size: 1.8rem; color: #ff9800; margin: 0;">{{ pending_orders }}</h2>
+                </div>
+                <div class="card" style="text-align: center; padding: 20px;">
+                    <p style="color: var(--text-light); margin-bottom: 10px; font-size: 0.9rem;">Processing Orders</p>
+                    <h2 style="font-size: 1.8rem; color: #2196f3; margin: 0;">{{ processing_orders }}</h2>
+                </div>
+                <div class="card" style="text-align: center; padding: 20px;">
+                    <p style="color: var(--text-light); margin-bottom: 10px; font-size: 0.9rem;">Cancelled Orders</p>
+                    <h2 style="font-size: 1.8rem; color: #f44336; margin: 0;">{{ cancelled_orders }}</h2>
+                </div>
+                <div class="card" style="text-align: center; padding: 20px;">
+                    <p style="color: var(--text-light); margin-bottom: 10px; font-size: 0.9rem;">Completion Rate</p>
+                    <h2 style="font-size: 1.8rem; color: #4caf50; margin: 0;">
+                        {{ "%.1f"|format((completed_orders / total_orders * 100) if total_orders > 0 else 0) }}%
+                    </h2>
+                </div>
+            </div>
+            
+            <!-- Top Products -->
+            <h2 style="margin-bottom: 20px;">Top Selling Products</h2>
+            <table class="data-table" style="margin-bottom: 40px;">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Quantity Sold</th>
+                        <th>Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if top_products %}
+                    {% for product in top_products %}
+                    <tr>
+                        <td><strong>{{ product.name }}</strong></td>
+                        <td>{{ product.total_quantity }}</td>
+                        <td><strong>${{ "%.2f"|format(product.total_revenue) }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; padding: 40px; color: var(--text-light);">No sales data available.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+            
+            <!-- Recent Orders -->
+            <h2 style="margin-bottom: 20px;">Recent Orders</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Order Number</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if recent_orders %}
+                    {% for order in recent_orders %}
+                    <tr>
+                        <td><strong>#{{ order.order_number }}</strong></td>
+                        <td>{{ order.user.name }}</td>
+                        <td><strong>${{ "%.2f"|format(order.total_amount) }}</strong></td>
+                        <td style="color: {% if order.status == 'completed' %}green{% elif order.status == 'processing' %}orange{% elif order.status == 'cancelled' %}red{% else %}gray{% endif %}; font-weight: 600;">
+                            {{ order.status|title }}
+                        </td>
+                        <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') if order.created_at else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">No orders found.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 15px; background-color: var(--bg-light); border-top: 1px solid var(--border-light); font-size: 0.8rem; color: var(--text-light);">
+        HomeCraft Admin | Version 1.0
+    </footer>
+</body>
+</html>
+

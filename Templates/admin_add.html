@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if product %}Edit Product{% else %}Add Product{% endif %} - Admin</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+
+  <main class="content-container"><a href="{{ url_for('admin.manage_products') }}" class="back-link">← Back to Products</a>
+   <div class="white-card">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" style="padding: 10px; margin-bottom: 20px; background: {% if category == 'error' %}#ffebee{% elif category == 'success' %}#e8f5e9{% else %}#e3f2fd{% endif %}; color: {% if category == 'error' %}#c62828{% elif category == 'success' %}#2e7d32{% else %}#1565c0{% endif %}; border-radius: 5px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <div class="page-header">
+     <h2 class="page-title">{% if product %}Edit Product{% else %}Add New Product{% endif %}</h2>
+     <p class="page-subtitle">Fill in the product details below</p>
+    </div>
+
+    <form method="POST" action="{% if product %}{{ url_for('admin.edit_product', product_id=product.id) }}{% else %}{{ url_for('admin.add_product') }}{% endif %}" enctype="multipart/form-data">
+
+     <div class="form-group">
+        <label for="product-name" class="form-label">Product Name</label> <input type="text" id="product-name" name="product-name" class="form-input" placeholder="e.g., Modern Leather Sofa" value="{% if product %}{{ product.name }}{% endif %}" required>
+     </div>
+
+     <div class="form-group">
+        <label for="price" class="form-label">Price ($)</label> <input type="number" id="price" name="price" class="form-input" placeholder="0.00" step="0.01" min="0" value="{% if product %}{{ product.price }}{% endif %}" required>
+     </div>
+
+     <div class="form-group">
+        <label for="category" class="form-label">Category</label>
+        <select id="category" name="category" class="form-select" required> 
+            <option value="">Select a category</option> 
+            {% if categories %}
+            {% for cat in categories %}
+            <option value="{{ cat.name }}" {% if product and product.category and product.category.name == cat.name %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+            {% else %}
+            <option value="Sofas & Chairs">Sofas & Chairs</option>
+            <option value="Tables">Tables</option>
+            <option value="Beds">Beds</option>
+            <option value="Storage">Storage</option>
+            <option value="Lighting">Lighting</option>
+            {% endif %}
+        </select>
+     </div>
+
+     <div class="form-group">
+        <label for="description" class="form-label">Description</label> <textarea id="description" name="description" class="form-textarea" placeholder="Describe the product features, materials, and dimensions..." required>{% if product %}{{ product.description }}{% endif %}</textarea>
+     </div>
+
+     <div class="form-group">
+        <label for="stock_quantity" class="form-label">Stock Quantity</label> <input type="number" id="stock_quantity" name="stock_quantity" class="form-input" placeholder="0" step="1" min="0" value="{% if product %}{{ product.stock_quantity }}{% else %}0{% endif %}" required>
+     </div>
+
+     <div class="form-group">
+        <label for="image" class="form-label">Product Image</label> 
+        <input type="file" id="image" name="image" class="form-input" accept="image/*" {% if not product %}required{% endif %}>
+        <small style="color: var(--text-light); font-size: 0.85rem;">{% if product %}Upload a new image to replace the current one (optional){% else %}Upload a product image (JPG, PNG, etc.){% endif %}</small>
+        {% if product and product.image_url %}
+        <div style="margin-top: 10px;">
+            <p style="color: var(--text-light); font-size: 0.85rem; margin-bottom: 5px;">Current image:</p>
+            {% set img_file = product.image_url %}
+            <img src="{{ url_for('static', filename='images/' + img_file) }}" alt="{{ product.name }}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-light);">
+        </div>
+        {% endif %}
+     </div>
+
+     <button type="submit" class="btn btn-primary">{% if product %}Update Product{% else %}Add Product{% endif %}</button>
+   
+    </form>
+   </div>
+   <footer style="text-align: center; padding: 15px; background-color: var(--bg-light); border-top: 1px solid var(--border-light); font-size: 0.8rem; color: var(--text-light);">
+        HomeCraft Admin | Version 1.0
+   </footer>
+
+
+</body>
+</html>

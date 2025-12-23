@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Products - Admin</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> 
+</head>
+<body>
+    <div id="page-overlay"></div>
+
+    <header class="header">
+        <div class="logo">🏠 Admin Panel</div>
+        <nav class="nav">
+            <a href="{{ url_for('products.home') }}">View Site</a>
+        </nav>
+        <div class="search-icons">
+            <a href="{{ url_for('auth.profile') }}" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 0.5rem;"><span class="icon">👤</span><span style="font-size: 0.9rem; font-weight: 500;">Admin User</span></a>
+        </div>
+    </header>
+
+    <main class="admin-layout">
+        <div class="admin-sidebar">
+            <ul class="sidebar-nav">
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.manage_products') }}" class="active">Manage Products</a></li>
+                <li><a href="{{ url_for('admin.manage_categories') }}">Manage Categories</a></li>
+                <li><a href="{{ url_for('admin.view_orders') }}">View Orders</a></li>
+                <li><a href="{{ url_for('admin.manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('admin.sales_reports') }}">Sales Reports</a></li>
+                <li><a href="{{ url_for('feedback.view_feedback') }}">Feedbacks</a></li>
+            </ul>
+        </div>
+
+        <div class="admin-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" style="padding: 15px; margin-bottom: 20px; background: {% if category == 'error' %}#ffebee{% elif category == 'success' %}#e8f5e9{% else %}#e3f2fd{% endif %}; color: {% if category == 'error' %}#c62828{% elif category == 'success' %}#2e7d32{% else %}#1565c0{% endif %}; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: 500;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h1>Products Management</h1>
+                <a href="{{ url_for('admin.add_product') }}" class="btn btn-primary" style="text-decoration: none; padding: 10px 20px;">+ Add New Product</a>
+            </div>
+            
+            <!-- Search and Filters -->
+            <form method="GET" action="{{ url_for('admin.manage_products') }}" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                <input type="text" name="search" placeholder="Search products by name..." 
+                       value="{{ search_query }}" 
+                       style="padding: 10px; width: 300px; border: 1px solid var(--border-light); border-radius: 4px;">
+                
+                <select name="category" style="padding: 10px; border: 1px solid var(--border-light); border-radius: 4px; min-width: 150px;">
+                    <option value="all" {% if category_filter == 'all' %}selected{% endif %}>All Categories</option>
+                    {% if categories %}
+                        {% for cat in categories %}
+                            <option value="{{ cat.name }}" {% if category_filter == cat.name %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+                
+                <select name="stock" style="padding: 10px; border: 1px solid var(--border-light); border-radius: 4px; min-width: 150px;">
+                    <option value="all" {% if stock_filter == 'all' %}selected{% endif %}>All Stock Status</option>
+                    <option value="in_stock" {% if stock_filter == 'in_stock' %}selected{% endif %}>In Stock</option>
+                    <option value="out_of_stock" {% if stock_filter == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+                </select>
+
+                <select name="min_rating" style="padding: 10px; border: 1px solid var(--border-light); border-radius: 4px; min-width: 160px;">
+                    <option value="" {% if not min_rating %}selected{% endif %}>All Ratings</option>
+                    <option value="1" {% if min_rating == 1.0 %}selected{% endif %}>★ and up (1.0+)</option>
+                    <option value="2" {% if min_rating == 2.0 %}selected{% endif %}>★★ and up (2.0+)</option>
+                    <option value="3" {% if min_rating == 3.0 %}selected{% endif %}>★★★ and up (3.0+)</option>
+                    <option value="4" {% if min_rating == 4.0 %}selected{% endif %}>★★★★ and up (4.0+)</option>
+                    <option value="5" {% if min_rating == 5.0 %}selected{% endif %}>★★★★★ (5.0)</option>
+                </select>
+                
+                <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">Apply Filters</button>
+                {% if search_query or category_filter != 'all' or stock_filter != 'all' or min_rating %}
+                    <a href="{{ url_for('admin.manage_products') }}" class="btn btn-secondary" style="padding: 10px 20px; text-decoration: none; display: inline-block;">Clear</a>
+                {% endif %}
+            </form>
+            
+            <!-- Products Table -->
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Rating</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if products %}
+                    {% for product in products %}
+                    <tr {% if product.stock_quantity == 0 %}style="background-color: #ffebee;"{% endif %}>
+                        <td>
+                            {% set img_file = product.image_url if product.image_url else 'Home.jpg' %}
+                            <img src="{{ url_for('static', filename='images/' + img_file) }}" 
+                                 alt="{{ product.name }}" 
+                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                        </td>
+                        <td><strong>{{ product.name }}</strong></td>
+                        <td>{{ product.category.name if product.category else 'Uncategorized' }}</td>
+                        <td>${{ "%.2f"|format(product.price) }}</td>
+                        <td {% if product.stock_quantity == 0 %}style="color: #c62828; font-weight: bold;"{% endif %}>
+                            {% if product.stock_quantity == 0 %}
+                                <span style="color: #c62828; font-weight: bold;">Out of Stock</span>
+                            {% else %}
+                                {{ product.stock_quantity }}
+                            {% endif %}
+                        </td>
+                        <td>{{ "%.1f"|format(product.rating) }} ⭐</td>
+                        <td class="action-links">
+                            <a href="{{ url_for('admin.edit_product', product_id=product.id) }}" 
+                               style="color: var(--purple); text-decoration: underline; margin-right: 15px;">Edit</a>
+                            <form method="POST" action="{{ url_for('admin.delete_product', product_id=product.id) }}" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Are you sure you want to delete product \"{{ product.name }}\"? This action cannot be undone.');">
+                                <button type="submit" style="background: none; border: none; color: #c62828; cursor: pointer; text-decoration: underline; padding: 0;">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No products found.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 15px; background-color: var(--bg-light); border-top: 1px solid var(--border-light); font-size: 0.8rem; color: var(--text-light);">
+        HomeCraft Admin | Version 1.0
+    </footer>
+</body>
+</html>
+

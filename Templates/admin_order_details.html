@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - Admin</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> 
+</head>
+<body>
+    <div id="page-overlay"></div>
+
+    <header class="header">
+        <div class="logo">🏠 Admin Panel</div>
+        <nav class="nav">
+            <a href="{{ url_for('products.home') }}">View Site</a>
+        </nav>
+        <div class="search-icons">
+            <a href="{{ url_for('auth.profile') }}" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 0.5rem;"><span class="icon">👤</span><span style="font-size: 0.9rem; font-weight: 500;">Admin User</span></a>
+        </div>
+    </header>
+
+    <main class="admin-layout">
+        <div class="admin-sidebar">
+            <ul class="sidebar-nav">
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.manage_products') }}">Manage Products</a></li>
+                <li><a href="{{ url_for('admin.manage_categories') }}">Manage Categories</a></li>
+                <li><a href="{{ url_for('admin.view_orders') }}">View Orders</a></li>
+                <li><a href="{{ url_for('admin.manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('admin.sales_reports') }}">Sales Reports</a></li>
+                <li><a href="{{ url_for('feedback.view_feedback') }}">Feedbacks</a></li>
+            </ul>
+        </div>
+
+        <div class="admin-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" style="padding: 15px; margin-bottom: 20px; background: {% if category == 'error' %}#ffebee{% elif category == 'success' %}#e8f5e9{% else %}#e3f2fd{% endif %}; color: {% if category == 'error' %}#c62828{% elif category == 'success' %}#2e7d32{% else %}#1565c0{% endif %}; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: 500;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h1>Order Details</h1>
+                <a href="{{ url_for('admin.view_orders') }}" class="btn btn-secondary" style="text-decoration: none; padding: 10px 20px;">← Back to Orders</a>
+            </div>
+            
+            <!-- Order Information -->
+            <div class="card" style="margin-bottom: 30px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div>
+                        <h3 style="margin-bottom: 20px; color: var(--text-dark);">Order Information</h3>
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: var(--text-light); display: block; margin-bottom: 5px;">Order Number:</strong>
+                            <span style="font-size: 1.2rem; font-weight: 600;">{{ order.order_number }}</span>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: var(--text-light); display: block; margin-bottom: 5px;">Order Status:</strong>
+                            <form method="POST" action="{{ url_for('admin.update_order_status', order_id=order.id) }}" style="display: inline-block;">
+                                <select name="status" onchange="this.form.submit()" 
+                                        style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 4px; 
+                                               background: {% if order.status == 'completed' %}#e8f5e9{% elif order.status == 'pending' %}#fff3e0{% elif order.status == 'processing' %}#e3f2fd{% elif order.status == 'cancelled' %}#ffebee{% else %}#fff{% endif %};
+                                               color: {% if order.status == 'completed' %}#2e7d32{% elif order.status == 'pending' %}#ef6c00{% elif order.status == 'processing' %}#1565c0{% elif order.status == 'cancelled' %}#c62828{% else %}#212529{% endif %}; font-weight: 600;">
+                                    <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>Processing</option>
+                                    <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>Completed</option>
+                                    <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                </select>
+                            </form>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: var(--text-light); display: block; margin-bottom: 5px;">Order Date:</strong>
+                            <span>{{ order.created_at.strftime('%B %d, %Y at %I:%M %p') if order.created_at else 'N/A' }}</span>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: var(--text-light); display: block; margin-bottom: 5px;">Total Amount:</strong>
+                            <span style="font-size: 1.3rem; font-weight: 600; color: var(--purple);">${{ "%.2f"|format(order.total_amount) }}</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 style="margin-bottom: 20px; color: var(--text-dark);">Customer Information</h3>
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: var(--text-light); display: block; margin-bottom: 5px;">Name:</strong>
+                            <span>{{ order.user.name }}</span>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: var(--text-light); display: block; margin-bottom: 5px;">Email:</strong>
+                            <span>{{ order.user.email }}</span>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: var(--text-light); display: block; margin-bottom: 5px;">Phone Number:</strong>
+                            <span>{{ order.user.phone_number if order.user.phone_number else 'N/A' }}</span>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: var(--text-light); display: block; margin-bottom: 5px;">Shipping Address:</strong>
+                            <span>{{ order.shipping_address if order.shipping_address else 'N/A' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Items -->
+            <div class="card" style="margin-bottom: 30px;">
+                <h3 style="margin-bottom: 20px; color: var(--text-dark);">Order Items</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if order.items %}
+                        {% for item in order.items %}
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    {% if item.product %}
+                                        {% set img_file = item.product.image_url if item.product.image_url else 'table.jpeg' %}
+                                        <img src="{{ url_for('static', filename='images/' + img_file) }}" 
+                                             alt="{{ item.product.name }}" 
+                                             style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                                        <div>
+                                            <strong>{{ item.product.name }}</strong>
+                                            {% if item.product.category %}
+                                                <div style="color: var(--text-light); font-size: 0.9rem;">{{ item.product.category.name }}</div>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span>Product #{{ item.product_id }} (Deleted)</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>${{ "%.2f"|format(item.price) }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td><strong>${{ "%.2f"|format(item.get_subtotal()) }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-light);">No items in this order.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="card" style="max-width: 500px; margin-left: auto;">
+                <h3 style="margin-bottom: 20px; color: var(--text-dark);">Order Summary</h3>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light);">
+                    <span style="color: var(--text-light);">Subtotal:</span>
+                    <span>${{ "%.2f"|format(subtotal) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light);">
+                    <span style="color: var(--text-light);">Shipping:</span>
+                    <span>${{ "%.2f"|format(shipping) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light);">
+                    <span style="color: var(--text-light);">Tax (8%):</span>
+                    <span>${{ "%.2f"|format(tax) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-top: 15px; border-top: 2px solid var(--border-light); margin-top: 15px;">
+                    <span style="font-size: 1.2rem; font-weight: 600;">Total:</span>
+                    <span style="font-size: 1.2rem; font-weight: 600; color: var(--purple);">${{ "%.2f"|format(order.total_amount) }}</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 15px; background-color: var(--bg-light); border-top: 1px solid var(--border-light); font-size: 0.8rem; color: var(--text-light);">
+        HomeCraft Admin | Version 1.0
+    </footer>
+</body>
+</html>
+

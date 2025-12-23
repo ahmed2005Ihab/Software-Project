@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Category - Admin</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div id="page-overlay"></div>
+
+    <header class="header">
+        <div class="logo">🏠 Admin Panel</div>
+        <nav class="nav">
+            <a href="{{ url_for('products.home') }}">View Site</a>
+        </nav>
+        <div class="search-icons">
+            <a href="{{ url_for('auth.profile') }}" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 0.5rem;"><span class="icon">👤</span><span style="font-size: 0.9rem; font-weight: 500;">Admin User</span></a>
+        </div>
+    </header>
+
+    <main class="admin-layout">
+        <div class="admin-sidebar">
+            <ul class="sidebar-nav">
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.manage_products') }}">Manage Products</a></li>
+                <li><a href="{{ url_for('admin.manage_categories') }}" class="active">Manage Categories</a></li>
+                <li><a href="{{ url_for('admin.view_orders') }}">View Orders</a></li>
+                <li><a href="{{ url_for('admin.manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('admin.sales_reports') }}">Sales Reports</a></li>
+                <li><a href="{{ url_for('feedback.view_feedback') }}">Feedbacks</a></li>
+            </ul>
+        </div>
+
+        <div class="admin-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" style="padding: 15px; margin-bottom: 20px; background: {% if category == 'error' %}#ffebee{% elif category == 'success' %}#e8f5e9{% else %}#e3f2fd{% endif %}; color: {% if category == 'error' %}#c62828{% elif category == 'success' %}#2e7d32{% else %}#1565c0{% endif %}; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: 500;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h1>Add New Category</h1>
+                <a href="{{ url_for('admin.manage_categories') }}" class="btn btn-secondary" style="text-decoration: none; padding: 10px 20px;">← Back to Categories</a>
+            </div>
+            
+            <div class="white-card" style="max-width: 600px;">
+                <form method="POST" action="{{ url_for('admin.add_category') }}">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="name" class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-dark);">Category Name *</label>
+                        <input type="text" 
+                               id="name" 
+                               name="name" 
+                               class="form-input" 
+                               placeholder="e.g., Sofas & Chairs" 
+                               value="{% if name %}{{ name }}{% endif %}"
+                               required
+                               style="width: 100%; padding: 10px; border: 1px solid var(--border-light); border-radius: 4px; font-size: 1rem;">
+                        <small style="color: var(--text-light); font-size: 0.85rem; display: block; margin-top: 5px;">Enter a unique category name</small>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="description" class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-dark);">Description</label>
+                        <textarea id="description" 
+                                  name="description" 
+                                  class="form-textarea" 
+                                  placeholder="Describe the category (optional)..." 
+                                  rows="4"
+                                  style="width: 100%; padding: 10px; border: 1px solid var(--border-light); border-radius: 4px; font-size: 1rem; resize: vertical;">{% if description %}{{ description }}{% endif %}</textarea>
+                        <small style="color: var(--text-light); font-size: 0.85rem; display: block; margin-top: 5px;">Optional: Add a description for this category</small>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 30px;">
+                        <button type="submit" class="btn btn-primary" style="padding: 12px 30px; font-size: 1rem;">Add Category</button>
+                        <a href="{{ url_for('admin.manage_categories') }}" class="btn btn-secondary" style="text-decoration: none; padding: 12px 30px; font-size: 1rem; display: inline-block;">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 15px; background-color: var(--bg-light); border-top: 1px solid var(--border-light); font-size: 0.8rem; color: var(--text-light);">
+        HomeCraft Admin | Version 1.0
+    </footer>
+</body>
+</html>
+

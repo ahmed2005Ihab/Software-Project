@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeCraft - Admin Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> 
+</head>
+<body>
+
+    <header class="header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 1000;">
+        <div class="logo">🏠 Admin Panel</div>
+        <nav class="nav">
+            <a href="{{ url_for('products.home') }}">View Site</a>
+        </nav>
+        <div class="search-icons">
+            <a href="{{ url_for('auth.profile') }}" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 0.5rem;"><span class="icon">👤</span><span style="font-size: 0.9rem; font-weight: 500;">Admin User</span></a>
+        </div>
+    </header>
+
+    <main class="admin-layout">
+        <div class="admin-sidebar">
+            <ul class="sidebar-nav">
+                <li><a href="{{ url_for('admin.dashboard') }}" class="active">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.manage_products') }}">Manage Products</a></li>
+                <li><a href="{{ url_for('admin.manage_categories') }}">Manage Categories</a></li>
+                <li><a href="{{ url_for('admin.view_orders') }}">View Orders</a></li>
+                <li><a href="{{ url_for('admin.manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('admin.sales_reports') }}">Sales Reports</a></li>
+                <li><a href="{{ url_for('feedback.view_feedback') }}">Feedbacks</a></li>
+            </ul>
+        </div>
+
+        <div class="admin-content" style="margin-top: 0;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" style="padding: 15px; margin-top: 0; margin-bottom: 20px; background: {% if category == 'error' %}#ffebee{% elif category == 'success' %}#e8f5e9{% else %}#e3f2fd{% endif %}; color: {% if category == 'error' %}#c62828{% elif category == 'success' %}#2e7d32{% else %}#1565c0{% endif %}; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: 500;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <h1>Today's Dashboard Overview</h1>
+            
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 50px;">
+                <div class="card" style="text-align: center; border-left: 5px solid var(--purple); padding: 25px;">
+                    <p style="color: var(--text-light); margin-bottom: 10px; font-size: 0.9rem;">Today's Revenue</p>
+                    <h2 style="font-size: 2rem; margin: 0; color: var(--text-dark);">${{ "%.2f"|format(total_revenue) }}</h2>
+                </div>
+                <div class="card" style="text-align: center; border-left: 5px solid green; padding: 25px;">
+                    <p style="color: var(--text-light); margin-bottom: 10px; font-size: 0.9rem;">New Orders (Today)</p>
+                    <h2 style="font-size: 2rem; margin: 0; color: var(--text-dark);">{{ new_orders }}</h2>
+                </div>
+                <div class="card" style="text-align: center; border-left: 5px solid orange; padding: 25px;">
+                    <p style="color: var(--text-light); margin-bottom: 10px; font-size: 0.9rem;">Cancelled Orders (Today)</p>
+                    <h2 style="font-size: 2rem; margin: 0; color: var(--text-dark);">{{ pending_returns }}</h2>
+                </div>
+            </div>
+
+            <h2>Today's Recent Orders</h2>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if recent_orders %}
+                    {% for order in recent_orders %}
+                    <tr>
+                        <td>#{{ order.order_number }}</td>
+                        <td>{{ order.user.name }}</td>
+                        <td style="color: {% if order.status == 'completed' %}green{% elif order.status == 'processing' %}orange{% elif order.status == 'cancelled' %}red{% else %}gray{% endif %}; font-weight: 600;">{{ order.status|title }}</td>
+                        <td>${{ "%.2f"|format(order.total_amount) }}</td>
+                        <td class="action-links">
+                            <a href="{{ url_for('admin.order_details', order_id=order.id) }}">View Details</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="5">No orders yet.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+            
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 15px; background-color: var(--bg-light); border-top: 1px solid var(--border-light); font-size: 0.8rem; color: var(--text-light);">
+        HomeCraft Admin | Version 1.0
+    </footer>
+
+</body>
+</html>

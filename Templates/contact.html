@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - HomeCraft</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> 
+</head>
+<body>
+    <header class="header">
+        <div class="logo"><a href="{{ url_for('products.home') }}">🏠 HomeCraft</a></div>
+        <nav class="nav">
+            <a href="{{ url_for('products.home') }}">Home</a>
+            <a href="{{ url_for('products.products') }}">Products</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('cart.order_history') }}">My Orders</a>
+                <a href="{{ url_for('cart.view_wishlist') }}">Wishlist</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Login</a>
+            {% endif %}
+            <a href="{{ url_for('feedback.contact') }}" class="active">Contact Us</a>
+        </nav>
+        <div class="search-icons">
+            <form method="GET" action="{{ url_for('products.products') }}">
+                <input type="text" name="search" placeholder="Search furniture...">
+                <button type="submit">🔍</button>
+            </form>
+            <a href="{{ url_for('cart.view_cart') }}"><span class="icon">🛒</span></a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('auth.profile') }}" style="display: inline-flex; align-items: center; gap: 0.5rem;"><span class="icon">👤</span><span style="font-size: 0.9rem; font-weight: 500;">{{ current_user.name.split()[0] if current_user.name else 'User' }}</span></a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}"><span class="icon">👤</span></a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main style="max-width: 800px; margin: 100px auto 50px; padding: 0 20px;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" style="padding: 15px; margin-bottom: 20px; background: {% if category == 'error' %}#ffebee{% elif category == 'success' %}#e8f5e9{% else %}#e3f2fd{% endif %}; color: {% if category == 'error' %}#c62828{% elif category == 'success' %}#2e7d32{% else %}#1565c0{% endif %}; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: 500;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <h1 style="margin-bottom: 10px; color: var(--text-dark);">Contact Us</h1>
+        <p style="color: var(--text-light); margin-bottom: 30px;">We'd love to hear from you! Send us a message and we'll respond as soon as possible.</p>
+        
+        <div class="card" style="padding: 30px;">
+            <form method="POST" action="{{ url_for('feedback.contact') }}">
+                <div class="form-group">
+                    <label for="feedback_type" class="form-label">Type of Inquiry *</label>
+                    <select id="feedback_type" name="feedback_type" class="form-input" required>
+                        <option value="general" {% if feedback_type == 'general' %}selected{% endif %}>General Inquiry</option>
+                        <option value="support" {% if feedback_type == 'support' %}selected{% endif %}>Customer Support</option>
+                        <option value="feedback" {% if feedback_type == 'feedback' %}selected{% endif %}>Feedback</option>
+                        <option value="complaint" {% if feedback_type == 'complaint' %}selected{% endif %}>Complaint</option>
+                        <option value="suggestion" {% if feedback_type == 'suggestion' %}selected{% endif %}>Suggestion</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="name" class="form-label">Your Name *</label>
+                    <input type="text" id="name" name="name" class="form-input" value="{{ name }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Your Email *</label>
+                    <input type="email" id="email" name="email" class="form-input" value="{{ email }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="subject" class="form-label">Subject *</label>
+                    <input type="text" id="subject" name="subject" class="form-input" value="{{ subject }}" required placeholder="Brief description of your inquiry">
+                </div>
+
+                <div class="form-group">
+                    <label for="message" class="form-label">Message *</label>
+                    <textarea id="message" name="message" class="form-textarea" rows="6" required placeholder="Please provide details about your inquiry...">{{ message }}</textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 12px 20px;">Send Message</button>
+                    <a href="{{ url_for('products.home') }}" class="btn btn-secondary" style="text-decoration: none; padding: 12px 20px; display: inline-block;">Cancel</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card" style="padding: 30px; margin-top: 30px; background: var(--bg-light);">
+            <h3 style="margin-bottom: 20px; color: var(--text-dark);">Other Ways to Reach Us</h3>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <strong style="color: var(--text-dark);">Email:</strong>
+                    <span style="color: var(--text-light); margin-left: 10px;">support@homecraft.com</span>
+                </div>
+                <div>
+                    <strong style="color: var(--text-dark);">Phone:</strong>
+                    <span style="color: var(--text-light); margin-left: 10px;">(555) 123-4567</span>
+                </div>
+                <div>
+                    <strong style="color: var(--text-dark);">Business Hours:</strong>
+                    <span style="color: var(--text-light); margin-left: 10px;">Monday - Friday: 9:00 AM - 6:00 PM</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 15px; background-color: var(--bg-light); border-top: 1px solid var(--border-light); font-size: 0.8rem; color: var(--text-light); margin-top: 50px;">
+        HomeCraft | Version 1.0
+    </footer>
+</body>
+</html>
+
+
+

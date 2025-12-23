@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users - Admin</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> 
+</head>
+<body>
+    <div id="page-overlay"></div>
+
+    <header class="header">
+        <div class="logo">🏠 Admin Panel</div>
+        <nav class="nav">
+            <a href="{{ url_for('products.home') }}">View Site</a>
+        </nav>
+        <div class="search-icons">
+            <a href="{{ url_for('auth.profile') }}" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 0.5rem;"><span class="icon">👤</span><span style="font-size: 0.9rem; font-weight: 500;">Admin User</span></a>
+        </div>
+    </header>
+
+    <main class="admin-layout">
+        <div class="admin-sidebar">
+            <ul class="sidebar-nav">
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.manage_products') }}">Manage Products</a></li>
+                <li><a href="{{ url_for('admin.manage_categories') }}">Manage Categories</a></li>
+                <li><a href="{{ url_for('admin.view_orders') }}">View Orders</a></li>
+                <li><a href="{{ url_for('admin.manage_users') }}" class="active">Manage Users</a></li>
+                <li><a href="{{ url_for('admin.sales_reports') }}">Sales Reports</a></li>
+                <li><a href="{{ url_for('feedback.view_feedback') }}">Feedbacks</a></li>
+            </ul>
+        </div>
+
+        <div class="admin-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" style="padding: 15px; margin-bottom: 20px; background: {% if category == 'error' %}#ffebee{% elif category == 'success' %}#e8f5e9{% else %}#e3f2fd{% endif %}; color: {% if category == 'error' %}#c62828{% elif category == 'success' %}#2e7d32{% else %}#1565c0{% endif %}; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: 500;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <h1>Users Management</h1>
+            
+            <!-- User Type Filter Tabs -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-light);">
+                <a href="{{ url_for('admin.manage_users', type='all') }}" 
+                   style="padding: 10px 20px; text-decoration: none; color: var(--text-dark); border-bottom: 3px solid {% if user_type == 'all' %}var(--purple){% else %}transparent{% endif %}; font-weight: {% if user_type == 'all' %}600{% else %}400{% endif %};">
+                    All Users ({{ all_count }})
+                </a>
+                <a href="{{ url_for('admin.manage_users', type='admin') }}" 
+                   style="padding: 10px 20px; text-decoration: none; color: var(--text-dark); border-bottom: 3px solid {% if user_type == 'admin' %}var(--purple){% else %}transparent{% endif %}; font-weight: {% if user_type == 'admin' %}600{% else %}400{% endif %};">
+                    Admins ({{ admin_count }})
+                </a>
+                <a href="{{ url_for('admin.manage_users', type='customer') }}" 
+                   style="padding: 10px 20px; text-decoration: none; color: var(--text-dark); border-bottom: 3px solid {% if user_type == 'customer' %}var(--purple){% else %}transparent{% endif %}; font-weight: {% if user_type == 'customer' %}600{% else %}400{% endif %};">
+                    Customers ({{ customer_count }})
+                </a>
+            </div>
+            
+            <!-- Search -->
+            <form method="GET" action="{{ url_for('admin.manage_users') }}" style="margin-bottom: 20px;">
+                <input type="text" name="search" placeholder="Search by name or email..." 
+                       value="{{ search_query }}" 
+                       style="padding: 10px; width: 400px; border: 1px solid var(--border-light); border-radius: 4px;">
+                {% if user_type != 'all' %}
+                    <input type="hidden" name="type" value="{{ user_type }}">
+                {% endif %}
+                <button type="submit" class="btn btn-primary" style="padding: 10px 20px; margin-left: 10px;">Search</button>
+                {% if search_query or user_type != 'all' %}
+                    <a href="{{ url_for('admin.manage_users') }}" class="btn btn-secondary" style="padding: 10px 20px; margin-left: 10px; text-decoration: none; display: inline-block;">Clear</a>
+                {% endif %}
+            </form>
+            
+            <!-- Users Table -->
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone Number</th>
+                        <th>Address</th>
+                        <th>Type</th>
+                        <th>Orders</th>
+                        <th>Registered</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if users %}
+                    {% for user in users %}
+                    <tr>
+                        <td><strong>{{ user.name }}</strong></td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.phone_number if user.phone_number else 'N/A' }}</td>
+                        <td>{{ user.address if user.address else 'N/A' }}</td>
+                        <td>
+                            {% if user.is_admin %}
+                                <span style="background: var(--purple); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">Admin</span>
+                            {% else %}
+                                <span style="background: #e0e0e0; color: var(--text-dark); padding: 4px 10px; border-radius: 12px; font-size: 0.85rem;">Customer</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.orders|length if user.orders else 0 }}</td>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'N/A' }}</td>
+                        <td class="action-links">
+                            {% if not user.is_admin or user.id != current_user.id %}
+                                <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirm('Are you sure you want to delete user {{ user.email }}? This action cannot be undone.');">
+                                    <button type="submit" style="background: none; border: none; color: #c62828; cursor: pointer; text-decoration: underline; padding: 0;">Delete</button>
+                                </form>
+                            {% else %}
+                                <span style="color: var(--text-light); font-size: 0.9rem;">Current User</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-light);">No users found.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 15px; background-color: var(--bg-light); border-top: 1px solid var(--border-light); font-size: 0.8rem; color: var(--text-light);">
+        HomeCraft Admin | Version 1.0
+    </footer>
+</body>
+</html>
+
