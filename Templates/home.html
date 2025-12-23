@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeCraft - Modern Furniture</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> 
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo"><a href="{{ url_for('products.home') }}">🏠 HomeCraft</a></div>
+        <nav class="nav">
+            <a href="{{ url_for('products.home') }}" class="active">Home</a>
+            <a href="{{ url_for('products.products') }}">Products</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('cart.order_history') }}">My Orders</a>
+                <a href="{{ url_for('cart.view_wishlist') }}">Wishlist</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Login</a>
+            {% endif %}
+            <a href="{{ url_for('feedback.contact') }}">Contact Us</a>
+            {% if current_user.is_authenticated and current_user.is_admin %}
+                <a href="{{ url_for('admin.dashboard') }}">Admin</a>
+            {% endif %}
+        </nav>
+        <div class="search-icons">
+            <form method="GET" action="{{ url_for('products.products') }}">
+                <input type="text" name="search" placeholder="Search furniture...">
+                <button type="submit">🔍</button>
+            </form>
+            <a href="{{ url_for('cart.view_cart') }}"><span class="icon">🛒</span></a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('auth.profile') }}" style="display: inline-flex; align-items: center; gap: 0.5rem;"><span class="icon">👤</span><span style="font-size: 0.9rem; font-weight: 500;">{{ current_user.name.split()[0] if current_user.name else 'User' }}</span></a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}"><span class="icon">👤</span></a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" style="max-width: 1200px; margin: 2rem auto;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <section class="hero">
+            <div class="hero-content">
+                <p style="color: var(--primary); font-weight: 700; margin-bottom: 1rem; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px;">New Collection 2025</p>
+                <h1 class="hero-title">Transform Your Space with Modern Furniture</h1>
+                <p style="margin-bottom: 2rem; color: var(--text-medium); font-size: 1.1rem; line-height: 1.8;">Discover curated collections that blend style, comfort, and quality craftsmanship for every room in your home.</p>
+                <a href="{{ url_for('products.products') }}" class="btn btn-primary">Shop Now →</a>
+                
+                <div class="stats">
+                    <div class="stat-item"><strong>2,500+</strong><span>Products</span></div>
+                    <div class="stat-item"><strong>50K+</strong><span>Happy Customers</span></div>
+                    <div class="stat-item"><strong>4.9★</strong><span>Rating</span></div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="{{ url_for('static', filename='images/Home.jpg') }}" alt="Modern Home">
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="feature-item">
+                <h3>🚚</h3>
+                <h3>Free Shipping</h3>
+                <p>On orders over $500</p>
+            </div>
+            <div class="feature-item">
+                <h3>🛡️</h3>
+                <h3>Quality Guaranteed</h3>
+                <p>2-year warranty</p>
+            </div>
+            <div class="feature-item">
+                <h3>↩️</h3>
+                <h3>Easy Returns</h3>
+                <p>30-day return policy</p>
+            </div>
+            <div class="feature-item">
+                <h3>📞</h3>
+                <h3>24/7 Support</h3>
+                <p>Expert assistance</p>
+            </div>
+        </section>
+    </main>
+
+
+        <footer>
+        <div class="contact-info" style="margin-bottom: 1.5rem;">
+            <p style="font-weight: 700; color: var(--text-dark); margin-bottom: 0.5rem; font-size: 1.1rem;">Contact HomeCraft</p>
+            <p style="margin-bottom: 0.5rem;">Email: support@homecraft.com | Phone: 01121556349</p>
+            <p>Address: 6th of October, Giza, 90210</p>
+        </div>
+        <p style="font-weight: 600;">© 2025 HomeCraft. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
