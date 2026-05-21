@@ -436,9 +436,12 @@ It's meant to be a **learning resource** that shows how to build a real-world ap
 
 ---
 
-## 👨‍💻 Author
+## 👨‍💻 Authors
 
 **Ahmed Ihab** - [GitHub Profile](https://github.com/ahmed2005Ihab)
+**Ahmed Assem** - [GitHub Profile](https://github.com/AhmedTolba98341)
+**Jasmin Nasser** - [GitHub Profile](https://github.com/jasmin-nasser)
+**Bassant Mohamed** - [GitHub Profile](https://github.com/Bassant-27)
 
 ---
 
